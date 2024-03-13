@@ -1,10 +1,10 @@
 import math
 import numpy as np
 
-class LateralController:
-    def __init__(self, k_p:floatt=1.0, wheelbase_length:float=2.0)-> None:
+class StanleyLateralController:
+    def __init__(self, k_p: float = 1.0, wheelbase_length: float = 2.0) -> None:
         """
-        Initializes the Lateral Controller.
+        Initializes the Stanley Lateral Controller.
 
         :param k_p: Proportional gain for the lateral controller.
         :param wheelbase_length: The length between the front and rear wheels of the vehicle.
@@ -12,7 +12,7 @@ class LateralController:
         self.k_p = k_p
         self.wheelbase_length = wheelbase_length
 
-    def compute_steering(self, vehicle_x : float, vehicle_y : float , vehicle_heading : float, waypoints : float) -> float:
+    def compute_steering(self, vehicle_x: float, vehicle_y: float, vehicle_heading: float, waypoints: list) -> float:
         """
         Computes the steering angle needed to follow the waypoints.
 
