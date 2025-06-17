@@ -9,126 +9,170 @@ class Node:
         self.cost = 0.0
         self.parent = None
 
-def distance(node1, node2):
-    return math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
+class RRTStar:
+    def __init__(self, terrain, start, goal, max_elevation_diff=5.0, expand_dis=3.0, path_resolution=1.0, goal_sample_rate=0.05, max_iter=500):
+        self.terrain = terrain
+        self.start = start
+        self.goal = goal
+        self.max_elevation_diff = max_elevation_diff
+        self.expand_dis = expand_dis
+        self.path_resolution = path_resolution
+        self.goal_sample_rate = goal_sample_rate
+        self.max_iter = max_iter
+        self.node_list = [Node(start[0], start[1])]
+        self.x_max, self.y_max = terrain.shape
 
-def steer(from_node, to_node, extend_length=float('inf')):
-    """Steers from_node towards to_node"""
-    new_node = Node(from_node.x, from_node.y)
-    d = distance(from_node, to_node)
-    if extend_length > d:
-        extend_length = d
+    def distance(self, node1, node2):
+        return math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
 
-    theta = math.atan2(to_node.y - from_node.y, to_node.x - from_node.x)
-    new_node.x += extend_length * math.cos(theta)
-    new_node.y += extend_length * math.sin(theta)
-    new_node.cost = from_node.cost + extend_length
-    new_node.parent = from_node
-    return new_node
+    def steer(self, from_node, to_node, extend_length=float('inf')):
+        """Steers from_node towards to_node"""
+        new_node = Node(from_node.x, from_node.y)
+        d = self.distance(from_node, to_node)
+        if extend_length > d:
+            extend_length = d
 
-def get_nearest_node_index(node_list, rnd_node):
-    dlist = [distance(node, rnd_node) for node in node_list]
-    minind = dlist.index(min(dlist))
-    return minind
+        theta = math.atan2(to_node.y - from_node.y, to_node.x - from_node.x)
+        new_node.x += extend_length * math.cos(theta)
+        new_node.y += extend_length * math.sin(theta)
+        new_node.cost = from_node.cost + extend_length
+        new_node.parent = from_node
+        return new_node
 
-def get_neighborhood(node_list, new_node, radius):
-    nnode = [node for node in node_list if distance(node, new_node) <= radius]
-    return nnode
+    def get_nearest_node_index(self, rnd_node):
+        dlist = [self.distance(node, rnd_node) for node in self.node_list]
+        minind = dlist.index(min(dlist))
+        return minind
 
-def choose_parent(neighboring_nodes, new_node):
-    if not neighboring_nodes:
-        return None
+    def get_neighborhood(self, new_node, radius):
+        nnode = [node for node in self.node_list if self.distance(node, new_node) <= radius]
+        return nnode
 
-    costs = []
-    for node in neighboring_nodes:
-        t_node = steer(node, new_node)
-        if t_node:
-            costs.append(t_node.cost)
+    def choose_parent(self, neighboring_nodes, new_node):
+        if not neighboring_nodes:
+            return None
+
+        costs = []
+        for node in neighboring_nodes:
+            t_node = self.steer(node, new_node)
+            if t_node:
+                costs.append(t_node.cost)
+            else:
+                costs.append(float('inf'))
+
+        min_cost = min(costs)
+        min_index = costs.index(min_cost)
+
+        if min_cost == float('inf'):
+            return None
+
+        new_node.cost = min_cost
+        return neighboring_nodes[min_index]
+
+    def rewire(self, new_node, neighboring_nodes):
+        for node in neighboring_nodes:
+            t_node = self.steer(new_node, node)
+            if t_node and t_node.cost < node.cost:
+                node.parent = new_node
+                node.cost = t_node.cost
+
+    def generate_random_node(self):
+        if np.random.rand() > self.goal_sample_rate:
+            return Node(np.random.uniform(0, self.x_max), np.random.uniform(0, self.y_max))
         else:
-            costs.append(float('inf'))
-    
-    min_cost = min(costs)
-    min_index = costs.index(min_cost)
+            return Node(self.goal[0], self.goal[1])
 
-    if min_cost == float('inf'):
-        return None
+    def check_collision(self, node, parent_node):
+        """Check if the node or path collides with obstacles in the terrain and elevation difference."""
+        x, y = int(node.x), int(node.y)
+        px, py = int(parent_node.x), int(parent_node.y)
 
-    new_node.cost = min_cost
-    return neighboring_nodes[min_index]
+        if x < 0 or x >= self.x_max or y < 0 or y >= self.y_max:
+            return True  # Out of bounds
 
-def rewire(node_list, new_node, neighboring_nodes):
-    for node in neighboring_nodes:
-        t_node = steer(new_node, node)
-        if t_node and t_node.cost < node.cost:
-            node.parent = new_node
-            node.cost = t_node.cost
+        if self.terrain[x, y] == -1:  # Obstacle in the terrain
+            return True
 
-def generate_random_node(x_max, y_max, goal, goal_sample_rate):
-    if np.random.rand() > goal_sample_rate:
-        return Node(np.random.uniform(0, x_max), np.random.uniform(0, y_max))
-    else:
-        return goal
+        # Check if elevation difference is too large
+        elevation_diff = abs(self.terrain[x, y] - self.terrain[px, py])
+        if elevation_diff > self.max_elevation_diff:
+            return True  # Elevation change is too steep
 
-def draw_graph(node_list, goal):
-    plt.clf()
-    for node in node_list:
-        if node.parent:
-            plt.plot([node.x, node.parent.x], [node.y, node.parent.y], "-g")
+        return False
 
-    plt.plot(goal.x, goal.y, "xr")
-    plt.axis([0, 100, 0, 100])
-    plt.grid(True)
-    plt.pause(0.01)
+    def generate_final_course(self, goal_ind):
+        path = [(self.node_list[goal_ind].x, self.node_list[goal_ind].y)]
+        node = self.node_list[goal_ind]
+        while node.parent is not None:
+            node = node.parent
+            path.append((node.x, node.y))
+        path.reverse()
+        return path
 
-def rrt_star_planning(start, goal, obstacle_list, x_max, y_max, expand_dis=3.0, path_resolution=1.0, goal_sample_rate=0.05, max_iter=500):
-    start_node = Node(start[0], start[1])
-    goal_node = Node(goal[0], goal[1])
-    node_list = [start_node]
+    def plot_path_2d(self, path):
+        """Plot the terrain and the found path in 2D."""
+        plt.imshow(self.terrain, cmap='terrain')
+        path_x = [p[0] for p in path]
+        path_y = [p[1] for p in path]
 
-    for i in range(max_iter):
-        rnd_node = generate_random_node(x_max, y_max, goal_node, goal_sample_rate)
-        nearest_ind = get_nearest_node_index(node_list, rnd_node)
-        nearest_node = node_list[nearest_ind]
+        # Plot the start, goal, and the path
+        plt.plot(path_x, path_y, '-r', label="Path")
+        plt.scatter(self.start[0], self.start[1], color='green', label='Start', zorder=5)
+        plt.scatter(self.goal[0], self.goal[1], color='red', label='Goal', zorder=5)
 
-        new_node = steer(nearest_node, rnd_node, extend_length=expand_dis)
-        if new_node and not check_collision(new_node, obstacle_list, path_resolution):
-            neighboring_nodes = get_neighborhood(node_list, new_node, radius=expand_dis*2)
-            new_node.parent = choose_parent(neighboring_nodes, new_node)
-            if new_node.parent:
-                node_list.append(new_node)
-                rewire(node_list, new_node, neighboring_nodes)
+        plt.legend()
+        plt.title('2D Path Visualization - RRT*')
+        plt.colorbar(label='Elevation')
+        plt.show()
 
-        if distance(new_node, goal_node) <= expand_dis:
-            final_node = steer(new_node, goal_node)
-            if final_node and not check_collision(final_node, obstacle_list, path_resolution):
-                return generate_final_course(len(node_list) - 1, node_list, start_node)
+    def draw_graph(self, goal):
+        plt.clf()
+        for node in self.node_list:
+            if node.parent:
+                plt.plot([node.x, node.parent.x], [node.y, node.parent.y], "-g")
 
-        draw_graph(node_list, goal_node)
+        plt.plot(goal.x, goal.y, "xr")
+        plt.axis([0, self.x_max, 0, self.y_max])
+        plt.grid(True)
+        plt.pause(0.01)
 
-    return None  # Failed to find a path
+    def plan(self):
+        goal_node = Node(self.goal[0], self.goal[1])
 
-def check_collision(node, obstacle_list, path_resolution):
-    # This function should check if the path between node and its parent intersects any obstacle
-    # Placeholder for collision checking code
-    return False
+        for i in range(self.max_iter):
+            rnd_node = self.generate_random_node()
+            nearest_ind = self.get_nearest_node_index(rnd_node)
+            nearest_node = self.node_list[nearest_ind]
 
-def generate_final_course(goal_ind, node_list, start_node):
-    path = [(goal_ind.x, goal_ind.y)]
-    node = node_list[goal_ind]
-    while node.parent is not start_node:
-        node = node.parent
-        path.append((node.x, node.y))
-    path.append((start_node.x, start_node.y))
-    return path
+            new_node = self.steer(nearest_node, rnd_node, extend_length=self.expand_dis)
+            if new_node and not self.check_collision(new_node, nearest_node):
+                neighboring_nodes = self.get_neighborhood(new_node, radius=self.expand_dis * 2)
+                new_node.parent = self.choose_parent(neighboring_nodes, new_node)
+                if new_node.parent:
+                    self.node_list.append(new_node)
+                    self.rewire(new_node, neighboring_nodes)
 
-# # Parameters
-# start = (0, 0)
-# goal = (100, 100)
-# x_max = 100
-# y_max = 100
-# obstacle_list = []
+            if self.distance(new_node, goal_node) <= self.expand_dis:
+                final_node = self.steer(new_node, goal_node)
+                if final_node and not self.check_collision(final_node, new_node):
+                    return self.generate_final_course(len(self.node_list) - 1)
 
-# # Main
-# path = rrt_star_planning(start, goal, obstacle_list, x_max, y_max)
-# if path is not None:
-   
+        return None  # Failed to find a path
+
+# Example Usage
+terrain_with_obstacles = np.load('terrain_with_obstacles_and_points.npy')
+start_point = (20, 30)
+end_point = (180, 270)
+
+# Initialize RRT* planner
+rrt_star = RRTStar(terrain_with_obstacles, start_point, end_point)
+
+# Run the planning algorithm
+path = rrt_star.plan()
+
+# If a path is found, visualize it
+if path:
+    print("Found path!")
+    rrt_star.plot_path_2d(path)
+else:
+    print("No path found.")
