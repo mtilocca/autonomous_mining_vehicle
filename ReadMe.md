@@ -197,37 +197,6 @@ pip install numpy matplotlib scipy
 python3 run_demo.py
 ```
 
-This will generate the visualizations shown above!
-
-### Quick Start Example
-
-```python
-from terrain.slopedTerrainModel import TerrainMap
-from navigation_algorithms.A_star import a_star_search
-import numpy as np
-
-# Create terrain
-terrain = TerrainMap(width=100, length=100, slope_percentage=2.0)
-terrain.add_random_obstacles(50)
-
-# Define start and goal
-start = (10, 10)
-goal = (85, 85)
-
-# Extract obstacles
-obstacles = set()
-for x in range(100):
-    for y in range(100):
-        if terrain.terrain[x, y] == -1:
-            obstacles.add((x, y))
-
-# Plan path using A*
-path = a_star_search(start, goal, obstacles, (100, 100), movement='8way')
-
-if path:
-    print(f"Path found with {len(path)} waypoints!")
-```
-
 ## 📊 Performance Benchmarks
 
 ### Navigation Algorithm Comparison
@@ -262,112 +231,6 @@ Test conditions: 2.5m wheelbase, 1.5 m/s velocity, controller gain 0.5
 | Path completion rate | 98.7% |
 | Average speed | 1.48 m/s |
 
-## 🎮 Usage Examples
-
-### 1. Basic Path Planning
-
-```python
-from navigation_algorithms.A_star import a_star_search
-from terrain.slopedTerrainModel import TerrainMap
-
-# Setup terrain
-terrain = TerrainMap(width=200, length=200)
-terrain.add_random_obstacles(100)
-
-# Extract obstacles
-obstacles = {(x, y) for x in range(200) for y in range(200) 
-             if terrain.terrain[x, y] == -1}
-
-# Plan path
-path = a_star_search((10, 10), (180, 180), obstacles, (200, 200), movement='8way')
-
-if path:
-    print(f"Success! Path length: {len(path)} waypoints")
-```
-
-### 2. GPS-Integrated Navigation
-
-```python
-from src.gps_path_calculator import GPSNavigationSystem
-from terrain.slopedTerrainModel import TerrainMap
-
-# Setup terrain
-terrain = TerrainMap(width=100, length=100, slope_percentage=1.5)
-terrain.add_random_obstacles(75)
-
-# Create navigation system
-nav_system = GPSNavigationSystem(terrain, algorithm='astar')
-
-# Plan and simulate with GPS
-if nav_system.plan_path((10, 10), (85, 85)):
-    states = nav_system.simulate_navigation(vehicle_speed=2.0, time_step=0.5)
-    nav_system.visualize_results(states)
-```
-
-### 3. Vehicle Control Integration
-
-```python
-from vehicle_dynamics.vehicle_model import BicycleModel3D
-from low_level_control.StanleyLateralController import StanleyLateralController
-
-# Initialize vehicle
-vehicle = BicycleModel3D(length=2.5, velocity=5.0, x=0, y=0, z=0)
-
-# Initialize controller
-controller = StanleyLateralController(k_p=1.0, wheelbase_length=2.5)
-
-# Control loop
-waypoints = [(0, 0), (10, 5), (20, 10), (30, 15)]
-dt = 0.1
-
-for _ in range(100):
-    state = vehicle.get_state()
-    
-    # Compute steering command
-    steering = controller.compute_steering(
-        state['x'], state['y'], state['heading'], waypoints
-    )
-    
-    # Update vehicle state
-    vehicle.update(steering, velocity=5.0, pitch_rate=0.0, roll_rate=0.0, dt=dt)
-    
-    print(f"Position: ({state['x']:.2f}, {state['y']:.2f}), Heading: {state['heading']:.2f} rad")
-```
-
-### 4. Complete Simulation Pipeline
-
-```python
-# Full autonomous navigation demonstration
-from terrain.slopedTerrainModel import TerrainMap
-from navigation_algorithms.A_star import a_star_search
-from vehicle_dynamics.vehicle_model import BicycleModel3D
-from low_level_control.StanleyLateralController import StanleyLateralController
-import numpy as np
-
-# 1. Create environment
-terrain = TerrainMap(width=100, length=100, slope_percentage=0.5)
-terrain.add_random_obstacles(120)
-
-# 2. Plan path
-obstacles = {(x, y) for x in range(100) for y in range(100) 
-             if terrain.terrain[x, y] == -1}
-path = a_star_search((10, 10), (85, 85), obstacles, (100, 100), movement='8way')
-
-# 3. Initialize vehicle and controller
-vehicle = BicycleModel3D(length=2.5, velocity=1.5, x=10.0, y=10.0)
-controller = StanleyLateralController(k_p=0.5, wheelbase_length=2.5)
-
-# 4. Simulate
-for step in range(1000):
-    state = vehicle.get_state()
-    steering = controller.compute_steering(state['x'], state['y'], state['heading'], path)
-    vehicle.update(steering, 1.5, 0.0, 0.0, dt=0.1)
-    
-    # Check if goal reached
-    goal_dist = np.hypot(state['x'] - 85, state['y'] - 85)
-    if goal_dist < 2.0:
-        print(f"Goal reached in {step} steps!")
-        break
 ```
 
 ## 🧪 Testing & Demos
@@ -404,75 +267,6 @@ After running `run_demo.py`, you'll have:
   - Velocity profile
   - Performance metrics summary
 
-## 🔬 Advanced Features
-
-### Custom Terrain Generation
-
-```python
-from terrain.slopedTerrainModel import TerrainMap
-
-# Create sloped terrain with gradient
-terrain = TerrainMap(width=300, length=300, slope_percentage=2.5)
-
-# Add random obstacles
-terrain.add_random_obstacles(150)
-
-# Set start and goal points
-terrain.set_points(start=(20, 30), end=(280, 270))
-
-# Visualize (3D plot)
-terrain.visualize('Custom Terrain')
-
-# Save for later use
-terrain.save_map('custom_terrain.npy')
-```
-
-### Loading Pre-generated Terrain
-
-```python
-import numpy as np
-from terrain.slopedTerrainModel import TerrainMap
-
-# Load existing terrain
-terrain_data = np.load('terrain_with_obstacles_and_points.npy')
-
-# Create TerrainMap object
-terrain = TerrainMap(width=terrain_data.shape[0], length=terrain_data.shape[1])
-terrain.terrain = terrain_data
-```
-
-### Multi-Algorithm Comparison
-
-```python
-from navigation_algorithms.A_star import a_star_search
-from navigation_algorithms.dijkstra import Dijkstra
-from navigation_algorithms.rrt_star import RRTStar
-
-# Setup
-terrain = TerrainMap(width=100, length=100)
-terrain.add_random_obstacles(100)
-start = (10, 10)
-goal = (85, 85)
-
-# A* planning
-obstacles = {(x, y) for x in range(100) for y in range(100) 
-             if terrain.terrain[x, y] == -1}
-astar_path = a_star_search(start, goal, obstacles, (100, 100), movement='8way')
-
-# Dijkstra planning
-dijkstra = Dijkstra(terrain.terrain, start, goal, max_elevation_diff=5.0)
-dijkstra_path = dijkstra.plan()
-
-# RRT* planning
-rrt_star = RRTStar(terrain.terrain, start, goal, max_elevation_diff=5.0)
-rrt_path = rrt_star.plan()
-
-# Compare results
-print(f"A* waypoints: {len(astar_path)}")
-print(f"Dijkstra waypoints: {len(dijkstra_path)}")
-print(f"RRT* waypoints: {len(rrt_path)}")
-```
-
 ## 📈 Future Enhancements
 
 ### Planned Features
@@ -491,75 +285,12 @@ print(f"RRT* waypoints: {len(rrt_path)}")
 - [ ] SLAM (Simultaneous Localization and Mapping)
 - [ ] Advanced sensor fusion (GPS + LiDAR + IMU)
 
-## 🐛 Troubleshooting
 
-### Common Issues
-
-**Issue**: `TypeError: '<' not supported between instances of 'Node' and 'Node'`
-```bash
-# Solution: The Node class in dijkstra.py needs the __lt__ method
-# This is already fixed in the current version
-# If you still see this, make sure you have the latest dijkstra.py
-```
-
-**Issue**: Module import errors
-```bash
-# Solution: Run from project root directory
-cd ~/repos/autonomous_mining_vehicle
-python3 run_demo.py
-```
-
-**Issue**: "Path found by A*" prints during import
-```bash
-# Solution: This happens if A_star.py has example code at the bottom
-# Comment out or remove the example usage section
-```
-
-**Issue**: Missing visualization files
-```bash
-# Solution: Make sure run_demo.py completed successfully
-# Check for error messages in the terminal output
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Coding Standards
-- Follow PEP 8 style guidelines
-- Include docstrings for all functions/classes
-- Add unit tests for new features
-- Update documentation as needed
-- Test with multiple Python versions (3.8+)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Internal R&D Project
 
-## 👥 Authors
-
-- **Your Name** - *Initial work*
-
-## 🙏 Acknowledgments
-
-- Navigation algorithms based on classical planning literature (LaValle, Thrun)
-- GPS error models derived from real-world RTK-GPS performance data
-- Vehicle dynamics inspired by autonomous vehicle research (DARPA Grand Challenge)
-- Stanley controller from Stanford Racing Team
-- Terrain modeling techniques from robotics path planning research
-
-## 📞 Contact
-
-For questions, issues, or suggestions:
-- Open an issue on GitHub
-- Email: your.email@example.com
-- Project Link: [https://github.com/yourusername/autonomous_mining_vehicle](https://github.com/yourusername/autonomous_mining_vehicle)
 
 ## 📚 References
 
@@ -569,20 +300,3 @@ For questions, issues, or suggestions:
 4. Snider, J. M. (2009). "Automatic Steering Methods for Autonomous Automobile Path Tracking." *Robotics Institute*, Carnegie Mellon University.
 5. Hoffman, G., et al. (2007). "Autonomous Automobile Trajectory Tracking for Off-Road Driving: Controller Design, Experimental Validation and Racing." *American Control Conference*.
 
----
-
-**Last Updated**: December 2024  
-**Version**: 1.0.0  
-**Status**: Active Development
-
----
-
-## 💡 Tips for Best Results
-
-- Start with smaller terrains (50×50) for faster testing
-- Use A* for most applications - it's fast and produces good paths
-- Reduce vehicle speed and controller gain if seeing oscillations
-- Check cross-track error plots to tune controller performance
-- Use RRT* for scenarios with complex elevation constraints
-- Experiment with different obstacle densities to test robustness
-- Generate fresh visualizations with `python3 run_demo.py` after code changes
