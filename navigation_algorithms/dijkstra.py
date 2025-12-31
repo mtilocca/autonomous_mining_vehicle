@@ -9,6 +9,10 @@ class Node:
         self.y = y
         self.cost = float('inf')  # Initial cost is set to infinity
         self.parent = None
+    
+    def __lt__(self, other):
+        """Less than comparison for heap queue - compares by cost"""
+        return self.cost < other.cost
 
 class Dijkstra:
     def __init__(self, terrain, start, goal, max_elevation_diff=5.0):
@@ -96,7 +100,7 @@ class Dijkstra:
         plt.close()
 
 
-
+# Example usage (commented out - uncomment to test)
 '''
 # Example Usage
 terrain_with_obstacles = np.load('terrain_with_obstacles_and_points.npy')
@@ -115,5 +119,4 @@ if path:
     dijkstra.plot_path_2d(path, save_path='dijkstra_path.png')
 else:
     print("No path found.")
-
 '''

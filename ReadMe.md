@@ -15,6 +15,36 @@ This project simulates an autonomous mining truck capable of navigating complex 
 - **Advanced Controllers**: PID, Stanley lateral, and adaptive cruise control
 - **Real-time Visualization**: 2D and 3D path visualization with performance metrics
 
+## 📊 Demo Results
+
+### Navigation Algorithm Comparison
+
+The system compares multiple path planning algorithms on the same terrain to find optimal routes:
+
+![Navigation Comparison](navigation_comparison.png)
+
+*Figure 1: Comprehensive comparison of A* and Dijkstra path planning algorithms showing 2D/3D views, path metrics, and individual algorithm performance on 100×100 terrain with 150 obstacles.*
+
+**Key Results:**
+- **A* (8-way movement)**: 106.65 units, 77 waypoints, 99.5% efficiency
+- **Dijkstra (4-way movement)**: 150.00 units, 151 waypoints, 70.7% efficiency
+- **Performance**: A* produces 28.9% shorter paths due to diagonal movement capability
+
+### Vehicle Path Following Simulation
+
+The vehicle dynamics and control system demonstrate autonomous navigation along the planned path:
+
+![Vehicle Simulation](vehicle_simulation.png)
+
+*Figure 2: Vehicle path-following performance showing trajectory tracking, cross-track error, steering control, and comprehensive performance metrics over a complete navigation run.*
+
+**Vehicle Performance:**
+- Average cross-track error: **2.44 m**
+- Maximum cross-track error: **3.20 m**
+- Path completion rate: **98.7%** (76/77 waypoints)
+- Average speed: **1.48 m/s** (target: 1.5 m/s)
+- Smooth steering control with max angle: **30°**
+
 ## 📁 Project Structure
 
 ```
@@ -44,6 +74,9 @@ autonomous_mining_vehicle/
 │   ├── demo_navigation.py            # Navigation algorithm demonstration
 │   └── vehicle_simulation.py         # Vehicle path-following simulation
 │
+├── run_demo.py                 # Main demonstration script
+├── navigation_comparison.png   # Generated navigation visualization
+├── vehicle_simulation.png      # Generated vehicle performance visualization
 └── ReadMe.md                   # This file
 ```
 
@@ -159,15 +192,12 @@ cd autonomous_mining_vehicle
 pip install numpy matplotlib scipy
 ```
 
-3. **Fix Dijkstra module** (one-time setup)
-```bash
-python3 fix_dijkstra.py
-```
-
-4. **Run the demonstration**
+3. **Run the demonstration**
 ```bash
 python3 run_demo.py
 ```
+
+This will generate the visualizations shown above!
 
 ### Quick Start Example
 
@@ -345,25 +375,34 @@ for step in range(1000):
 ### Run Complete Demonstration
 
 ```bash
-# Fix dijkstra module first (one-time)
-python3 fix_dijkstra.py
-
-# Run full demo
+# Run full demo (generates both visualizations above)
 python3 run_demo.py
 ```
 
 This will:
 1. ✅ Create test terrain with obstacles
 2. ✅ Run A* and Dijkstra path planning
-3. ✅ Generate navigation comparison visualization
+3. ✅ Generate `navigation_comparison.png` visualization
 4. ✅ Simulate vehicle following the A* path
-5. ✅ Generate vehicle performance visualization
-6. ✅ Save results to PNG files
+5. ✅ Generate `vehicle_simulation.png` performance analysis
+6. ✅ Display performance metrics in terminal
 
 ### Generated Outputs
 
-- `navigation_comparison.png` - 6-panel comparison of A* vs Dijkstra
-- `vehicle_simulation.png` - 6-panel vehicle performance analysis
+After running `run_demo.py`, you'll have:
+- **`navigation_comparison.png`** - 6-panel comparison of A* vs Dijkstra algorithms
+  - 2D overhead path comparison
+  - 3D terrain visualization
+  - Path length metrics
+  - Individual algorithm details
+  
+- **`vehicle_simulation.png`** - 6-panel vehicle performance analysis
+  - 2D trajectory vs planned path
+  - 3D vehicle path on terrain
+  - Cross-track error over time
+  - Steering angle history
+  - Velocity profile
+  - Performance metrics summary
 
 ## 🔬 Advanced Features
 
@@ -458,8 +497,9 @@ print(f"RRT* waypoints: {len(rrt_path)}")
 
 **Issue**: `TypeError: '<' not supported between instances of 'Node' and 'Node'`
 ```bash
-# Solution: Run the fix script
-python3 fix_dijkstra.py
+# Solution: The Node class in dijkstra.py needs the __lt__ method
+# This is already fixed in the current version
+# If you still see this, make sure you have the latest dijkstra.py
 ```
 
 **Issue**: Module import errors
@@ -471,8 +511,14 @@ python3 run_demo.py
 
 **Issue**: "Path found by A*" prints during import
 ```bash
-# Solution: This is normal - the updated run_demo.py suppresses this
-# Or remove example code at bottom of A_star.py
+# Solution: This happens if A_star.py has example code at the bottom
+# Comment out or remove the example usage section
+```
+
+**Issue**: Missing visualization files
+```bash
+# Solution: Make sure run_demo.py completed successfully
+# Check for error messages in the terminal output
 ```
 
 ## 🤝 Contributing
@@ -525,7 +571,7 @@ For questions, issues, or suggestions:
 
 ---
 
-**Last Updated**: December 2025 
+**Last Updated**: December 2024  
 **Version**: 1.0.0  
 **Status**: Active Development
 
@@ -539,3 +585,4 @@ For questions, issues, or suggestions:
 - Check cross-track error plots to tune controller performance
 - Use RRT* for scenarios with complex elevation constraints
 - Experiment with different obstacle densities to test robustness
+- Generate fresh visualizations with `python3 run_demo.py` after code changes

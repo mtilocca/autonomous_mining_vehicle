@@ -44,7 +44,7 @@ except Exception as e:
     sys.exit(1)
 
 from vehicle_dynamics.vehicle_model import BicycleModel3D
-from low_level_control import StanleyLateralController
+from low_level_control.StanleyLateralController import StanleyLateralController
 import math
 
 
