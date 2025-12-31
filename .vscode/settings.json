@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./navigation_algorithms",
+        "./terrain"
+    ]
+}

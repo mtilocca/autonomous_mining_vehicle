@@ -95,6 +95,9 @@ class Dijkstra:
 
         plt.close()
 
+
+
+'''
 # Example Usage
 terrain_with_obstacles = np.load('terrain_with_obstacles_and_points.npy')
 start_point = (20, 30)
@@ -113,3 +116,4 @@ if path:
 else:
     print("No path found.")
 
+'''

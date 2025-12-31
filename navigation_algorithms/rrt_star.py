@@ -159,6 +159,8 @@ class RRTStar:
 
         return None  # Failed to find a path
 
+
+'''
 # Example Usage
 terrain_with_obstacles = np.load('terrain_with_obstacles_and_points.npy')
 start_point = (20, 30)
@@ -176,3 +178,4 @@ if path:
     rrt_star.plot_path_2d(path)
 else:
     print("No path found.")
+'''

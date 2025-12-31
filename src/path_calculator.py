@@ -1,7 +1,7 @@
 import numpy as np
-from A_star import AStar
+from navigation_algorithms.A_star import Node as A_star
 from rrt_star import RRTStar
-from terrain_map import TerrainMap
+from slopedTerrainModel import TerrainMap
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -51,7 +51,7 @@ def main():
 
     # Choose the terrain and planning algorithm
     terrain = flat_terrain  # or sloped_terrain, depending on the scenario
-    algorithm = AStar(start_point, end_point, terrain)  # or RRTStar, as needed
+    algorithm = A_star(start_point, end_point, terrain)  # or RRTStar, as needed
 
     # Calculate the path
     path = algorithm.find_path()
