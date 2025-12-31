@@ -183,7 +183,7 @@ scipy >= 1.6.0
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/autonomous_mining_vehicle.git
+git clone https://github.com/mtilocca/autonomous_mining_vehicle.git
 cd autonomous_mining_vehicle
 ```
 
